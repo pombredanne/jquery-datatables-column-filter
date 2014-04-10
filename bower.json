@@ -1,8 +1,8 @@
 {
   "name": "jquery-datatables-column-filter-slider",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "authors": [
-    "Jovan Popovic <jocapc@gmail.com>"
+    "Jovan Popovic <jocapc@gmail.com>",
     "Florian Mounier <florian.mounier@kozea.fr>"
   ],
   "description": "A fork of https://code.google.com/p/jquery-datatables-column-filter/ with a slider",
