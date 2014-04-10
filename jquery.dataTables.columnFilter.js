@@ -343,14 +343,15 @@
                 index = i,
                 slider_is_displayed = false,
                 slider_info = $('<input>').attr('disabled', 'disabled').hide(),
-                formatter = {
+                formatters = {
                   number: function(x, y) {
                     return x + ' - ' + y
                   },
                   money: function(x, y) {
                     return formatters['number'](Math.floor(x / 100., 2) + ' €', Math.round(y/100., 2) + ' €');
                   }
-                }[aoColumn.formatter];
+                },
+                formatter = formatters[aoColumn.formatter];
 
             th.append(input);
             th.append(slider_container);
