@@ -1,17 +1,17 @@
 ﻿/*
 * File:        jquery.dataTables.columnFilter.js
 * Version:     1.5.6.
-* Author:      Jovan Popovic 
-* 
+* Author:      Jovan Popovic
+*
 * Copyright 2011-2014 Jovan Popovic, all rights reserved.
 *
 * This source file is free software, under either the GPL v2 license or a
 * BSD style license, as supplied with this software.
-* 
-* This source file is distributed in the hope that it will be useful, but 
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-* or FITNESS FOR A PARTICULAR PURPOSE. 
-* 
+*
+* This source file is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE.
+*
 * Parameters:"
 * @sPlaceHolder                 String      Place where inline filtering function should be placed ("tfoot", "thead:before", "thead:after"). Default is "tfoot"
 * @sRangeSeparator              String      Separator that will be used when range values are sent to the server-side. Default value is "~".
@@ -65,7 +65,7 @@
             // use all rows
             else aiRows = oSettings.aiDisplayMaster; // all row numbers
 
-            // set up data array	
+            // set up data array
             var asResultData = new Array();
 
             for (var i = 0, c = aiRows.length; i < c; i++) {
@@ -269,7 +269,7 @@
                         th.append(aoFragments[ti]);
                     }
                 }
-                
+
 
             }
 
@@ -330,6 +330,89 @@
 
         }
 
+
+        function fnCreateSliderInput(oTable) {
+            //var currentFilter = oTable.fnSettings().aoPreSearchCols[i].sSearch;
+            //th.html(_fnRangeLabelPart(0));
+            th.html("");
+
+            var aoColumn = properties.aoColumns[i],
+                input = $('<input>').addClass('number-range'),
+                slider_container = $('<div>').addClass("column-slider"),
+                slider,
+                index = i,
+                slider_is_displayed = false,
+                slider_info = $('<input>').attr('disabled', 'disabled').hide(),
+                formatter = {
+                  number: function(x, y) {
+                    return x + ' - ' + y
+                  },
+                  money: function(x, y) {
+                    return formatters['number'](Math.floor(x / 100., 2) + ' €', Math.round(y/100., 2) + ' €');
+                  }
+                }[aoColumn.formatter];
+
+            th.append(input);
+            th.append(slider_container);
+            th.append(slider_info);
+            slider_info.val(formatter(aoColumn.min, aoColumn.max));
+            input.val(formatter(aoColumn.min, aoColumn.max));
+            slider_container.css({
+                position: 'absolute',
+                top: '-1000px',
+                width: input.css('width'),
+                fontSize: input.css('font-size')});
+            slider_info.css({
+                position: 'absolute',
+                top: '-1000px',
+                textAlign: 'center',
+                width: input.css('width'),
+                fontSize: input.css('font-size')});
+            slider_container.hide();
+            slider = slider_container.slider({
+                min: aoColumn.min,
+                max: aoColumn.max,
+                range: true,
+                values: [aoColumn.min, aoColumn.max],
+                slide: function(event, ui){
+                    var displayed_val = formatter(ui.values[0], ui.values[1]);
+                    input.val(displayed_val);
+                    slider_info.val(displayed_val);
+                }
+            });
+            input.focus(function(){
+                input.css('text-align', 'center');
+                slider.css('width',input.css('width')).show();
+                slider.position({
+                    my: 'center',
+                    of: input,
+                    at: 'center'
+                });
+                slider_info.css('width',input.css('width')).show();
+                slider_info.position({
+                    my: 'bottom',
+                    of: slider,
+                    at: 'top-10'
+                });
+                slider_is_displayed = true;
+                input.hide();
+            });
+            $(document).bind("click", function(e){
+                if(e.target != input.get(0) && slider_is_displayed){
+                    slider.hide();
+                    slider_info.hide();
+                    slider_is_displayed = false;
+                    input.show();
+                    oTable.fnFilter(slider.slider('values').join(properties.sRangeSeparator),
+                        index, true, false);
+                    fnOnFiltered();
+                }
+            });
+        }
+
+
+
+
         function fnCreateColumnSelect(oTable, aData, iColumn, nTh, sLabel, bRegex, oSelected, bMultiselect) {
             if (aData == null)
                 aData = _fnGetColumnValues(oTable.fnSettings(), iColumn, true, false, true);
@@ -369,7 +452,7 @@
             var select = $(r + '</select>');
             nTh.html(select);
             nTh.wrapInner('<span class="filter_column filter_select" />');
-			
+
 			if(bMultiselect) {
 				select.change(function () {
 					if ($(this).val() != "") {
@@ -387,7 +470,7 @@
 						} );
 						var re = '^(' + asEscapedFilters.join('|') + ')$';
 					}
-					 
+
 					oTable.fnFilter( re, index, true, false );
 				});
 			} else {
@@ -412,8 +495,8 @@
         function fnCreateSelect(oTable, aData, bRegex, oSelected, bMultiselect) {
             var oSettings = oTable.fnSettings();
             if ( (aData == null || typeof(aData) == 'function' ) && oSettings.sAjaxSource != "" && !oSettings.oFeatures.bServerSide) {
-                // Add a function to the draw callback, which will check for the Ajax data having 
-                // been loaded. Use a closure for the individual column elements that are used to 
+                // Add a function to the draw callback, which will check for the Ajax data having
+                // been loaded. Use a closure for the individual column elements that are used to
                 // built the column filter, since 'i' and 'th' (etc) are locally "global".
                 oSettings.aoDrawCallback.push({
                     "fn": (function (iColumn, nTh, sLabel) {
@@ -432,9 +515,9 @@
             fnCreateColumnSelect(oTable, typeof(aData) == 'function' ? null: aData, _fnColumnIndex(i), th, label, bRegex, oSelected, bMultiselect); //Issue 37
 
         }
-		 
-		function fnRegExpEscape( sText ) { 
-			return sText.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"); 
+
+		function fnRegExpEscape( sText ) {
+			return sText.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 		};
 
 		function fnCreateDropdown(aData) {
@@ -451,8 +534,8 @@
 				oTable.fnFilter($(this).data('value'), index);
 			});
 		}
-		
-		
+
+
         function fnCreateCheckbox(oTable, aData) {
 
             if (aData == null)
@@ -628,7 +711,7 @@
             });
             oTable.fnFilter('', index, true, false);
             return false;
-            }); 
+            });
             */
         }
 
@@ -709,7 +792,7 @@
 
                 oHost = oTable.fnSettings().nTHead;
 
-                
+
             }
 
             //$(sFilterRow + " th", oHost).each(function (index) {//bug with ColVis
@@ -759,6 +842,9 @@
                             break;
                         case "date-range":
                             fnCreateDateRangeInput(oTable);
+                            break;
+                        case "slider":
+                            fnCreateSliderInput(oTable);
                             break;
                         case "checkbox":
                             fnCreateCheckbox(oTable, aoColumn.values);
